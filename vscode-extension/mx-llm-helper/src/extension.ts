@@ -131,14 +131,9 @@ export function activate(context: vscode.ExtensionContext) {
                 // 웹뷰로 응답 전송
                 if (chatPanel) {
                   if (response.status === "ok") {
-                    // 결과를 문자열로 변환
-                    const resultsText = response.results
-                      .map((result) => JSON.stringify(result, null, 2))
-                      .join("\n\n");
-
                     chatPanel.webview.postMessage({
                       type: "addMessage",
-                      text: `검색 결과:\n\`\`\`\n${resultsText}\n\`\`\``,
+                      text: response.result,
                       isUser: false,
                     });
                   } else {

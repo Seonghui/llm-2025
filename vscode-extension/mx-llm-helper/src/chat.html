@@ -22,14 +22,21 @@
 
     .search-mode {
       margin-bottom: 10px;
-      padding: 8px;
-      border-radius: 4px;
+      padding: 8px 12px;
+      border-radius: 16px;
       background-color: var(--vscode-badge-background);
       color: var(--vscode-badge-foreground);
       font-size: 0.9em;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 8px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .search-mode:hover {
+      opacity: 0.9;
     }
 
     .search-mode.selected {
@@ -48,6 +55,23 @@
       width: 16px;
       height: 16px;
       display: inline-block;
+    }
+
+    .search-mode-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .search-mode-remove {
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+    }
+
+    .search-mode-remove:hover {
+      opacity: 1;
     }
 
     .chat-container {
@@ -167,9 +191,12 @@
 </head>
 
 <body>
-  <div class="search-mode" id="searchMode">
-    <span class="search-mode-icon">🔍</span>
-    <span id="searchModeText">일반 검색</span>
+  <div class="search-mode-container">
+    <div class="search-mode" id="searchMode">
+      <span class="search-mode-icon">🔍</span>
+      <span id="searchModeText">일반 검색</span>
+    </div>
+    <span class="search-mode-remove" id="searchModeRemove" title="검색 모드 제거">✕</span>
   </div>
   <div class="chat-container" id="chatContainer"></div>
   <div class="input-container">
@@ -183,6 +210,10 @@
     const sendButton = document.getElementById("sendButton");
     const searchMode = document.getElementById("searchMode");
     const searchModeText = document.getElementById("searchModeText");
+    const searchModeRemove = document.getElementById("searchModeRemove");
+
+    // 현재 검색 모드 상태 저장
+    let currentSearchMode = "general";
 
     // Mock data for testing
     const mockResponses = {
@@ -190,6 +221,34 @@
       help: "I can help you understand code, suggest improvements, or answer questions about programming.",
       default: "I understand your question. Let me help you with that.",
     };
+
+    // 검색 모드 업데이트 함수
+    function updateSearchMode(mode) {
+      if (mode) {
+        currentSearchMode = mode;
+        searchMode.className = "search-mode " + mode;
+        switch (mode) {
+          case "selected":
+            searchModeText.textContent = "선택된 코드 검색";
+            break;
+          case "file":
+            searchModeText.textContent = "현재 파일 검색";
+            break;
+          case "general":
+            searchModeText.textContent = "일반 검색";
+            break;
+        }
+      }
+    }
+
+    // 검색 모드 제거 함수
+    function removeSearchMode() {
+      updateSearchMode("general");
+      vscode.postMessage({
+        type: "updateSearchMode",
+        mode: "general"
+      });
+    }
 
     // 메시지 전송 함수
     function sendMessage() {
@@ -201,7 +260,7 @@
         // 메시지 전송
         vscode.postMessage({
           type: "sendMessage",
-          text: text,
+          text: text
         });
 
         // 입력창 초기화
@@ -225,22 +284,6 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    // 검색 모드 업데이트 함수
-    function updateSearchMode(mode) {
-      searchMode.className = "search-mode " + mode;
-      switch (mode) {
-        case "selected":
-          searchModeText.textContent = "선택된 코드 검색";
-          break;
-        case "file":
-          searchModeText.textContent = "현재 파일 검색";
-          break;
-        case "general":
-          searchModeText.textContent = "일반 검색";
-          break;
-      }
-    }
-
     // 이벤트 리스너 등록
     sendButton.addEventListener("click", sendMessage);
     messageInput.addEventListener("keypress", (e) => {
@@ -248,6 +291,9 @@
         sendMessage();
       }
     });
+
+    // 검색 모드 제거 버튼 이벤트
+    searchModeRemove.addEventListener("click", removeSearchMode);
 
     // VS Code로부터 메시지 수신
     window.addEventListener("message", (event) => {

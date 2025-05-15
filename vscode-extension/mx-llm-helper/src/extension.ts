@@ -12,10 +12,12 @@ export function activate(context: vscode.ExtensionContext) {
   console.log("Extension activation started...");
 
   // API 서비스 초기화
-  const apiService = new ApiService("http://localhost:3000"); // API 서버 URL을 적절히 수정하세요
+  const apiService = new ApiService("http://localhost:3000");
 
   // 웹뷰 패널 생성
   let chatPanel: vscode.WebviewPanel | undefined;
+  let currentSearchMode: "selected" | "file" | "general" = "general";
+  let isPanelActive = false;
 
   // 현재 에디터의 정보를 가져오는 함수
   function getCurrentEditorInfo(): SearchRequest["currentFile"] | undefined {
@@ -48,23 +50,24 @@ export function activate(context: vscode.ExtensionContext) {
 
   // 검색 모드 업데이트 함수
   function updateSearchMode() {
-    if (!chatPanel) {
+    if (!chatPanel || isPanelActive) {
       return;
     }
 
     const selectedText = getSelectedText();
     const currentFile = getCurrentEditorInfo();
-    let mode: "selected" | "file" | "general" = "general";
 
     if (selectedText) {
-      mode = "selected";
+      currentSearchMode = "selected";
     } else if (currentFile) {
-      mode = "file";
+      currentSearchMode = "file";
+    } else {
+      currentSearchMode = "general";
     }
 
     chatPanel.webview.postMessage({
       type: "updateSearchMode",
-      mode,
+      mode: currentSearchMode,
     });
   }
 
@@ -103,10 +106,19 @@ export function activate(context: vscode.ExtensionContext) {
         () => {
           console.log("Chat panel disposed");
           chatPanel = undefined;
+          isPanelActive = false;
         },
         null,
         context.subscriptions
       );
+
+      // 패널 활성화 상태 변경 이벤트
+      chatPanel.onDidChangeViewState((e) => {
+        isPanelActive = e.webviewPanel.active;
+        if (!isPanelActive) {
+          updateSearchMode();
+        }
+      });
 
       // 웹뷰로부터 메시지 수신
       chatPanel.webview.onDidReceiveMessage(
@@ -123,8 +135,8 @@ export function activate(context: vscode.ExtensionContext) {
                 // API 호출
                 const response = await apiService.search(
                   message.text,
-                  selectedText,
-                  currentFile
+                  currentSearchMode === "selected" ? selectedText : undefined,
+                  currentSearchMode === "file" ? currentFile : undefined
                 );
                 console.log("API response:", response);
 
@@ -165,14 +177,19 @@ export function activate(context: vscode.ExtensionContext) {
       updateSearchMode();
 
       // 에디터 선택 변경 이벤트 구독
-      context.subscriptions.push(
-        vscode.window.onDidChangeActiveTextEditor(() => {
+      const editorChangeDisposable = vscode.window.onDidChangeActiveTextEditor(() => {
+        if (chatPanel && !isPanelActive) {
           updateSearchMode();
-        }),
-        vscode.window.onDidChangeTextEditorSelection(() => {
+        }
+      });
+
+      const selectionChangeDisposable = vscode.window.onDidChangeTextEditorSelection(() => {
+        if (chatPanel && !isPanelActive) {
           updateSearchMode();
-        })
-      );
+        }
+      });
+
+      context.subscriptions.push(editorChangeDisposable, selectionChangeDisposable);
     }
   );
 

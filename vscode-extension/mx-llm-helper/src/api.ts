@@ -1,10 +1,18 @@
 import { SearchRequest, SearchResponse } from "./types";
+import axios from "axios";
 
 export class ApiService {
   private baseUrl: string;
+  private axiosInstance;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
+    this.axiosInstance = axios.create({
+      timeout: 30000, // 30초 타임아웃
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
   }
 
   async search(
@@ -12,32 +20,34 @@ export class ApiService {
     selectedText?: string,
     currentFile?: SearchRequest["currentFile"]
   ): Promise<SearchResponse> {
-    // Mock 응답 데이터
-    const mockResult = `# 검색 결과
+    try {
+      const response = await this.axiosInstance.post(`${this.baseUrl}/search`, {
+        question,
+        selectedText,
+        currentFile
+      } as SearchRequest);
 
-## 첫 번째 결과
-이것은 첫 번째 검색 결과입니다.
+      return response.data as SearchResponse;
+    } catch (error) {
+      console.error("API call failed:", error);
 
-## 두 번째 결과
-이것은 두 번째 검색 결과입니다.
+      let errorMessage = "죄송합니다. API 호출 중 오류가 발생했습니다.";
 
-## 세 번째 결과
-이것은 세 번째 검색 결과입니다.
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ETIMEDOUT') {
+          errorMessage = "서버 응답 시간이 초과되었습니다. 서버가 실행 중인지 확인해주세요.";
+        } else if (error.response) {
+          errorMessage = `서버 오류: ${error.response.status} - ${error.response.statusText}`;
+        } else if (error.request) {
+          errorMessage = "서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.";
+        }
+      }
 
-${selectedText
-        ? "> 선택된 코드 기반 검색"
-        : currentFile
-          ? "> 전체 파일 기반 검색"
-          : "> 일반 검색"
-      }`;
-
-    // 실제 API 호출 대신 mock 데이터 반환
-    return {
-      question,
-      status: "ok",
-      result: mockResult,
-    };
-
-
+      return {
+        question,
+        status: "error",
+        result: errorMessage,
+      };
+    }
   }
 }

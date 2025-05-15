@@ -13,11 +13,12 @@ import torch
 
 # ✅ 모델 & 인덱스 & 메타데이터 로드
 # TODO: 모델  로컬, 원격 받게 수정 
-# model = SentenceTransformer("intfloat/multilingual-e5-large-instruct")
-model = SentenceTransformer("../../multilingual-e5-large-instruct")
+model = SentenceTransformer("intfloat/multilingual-e5-large-instruct")
+# model = SentenceTransformer("../../multilingual-e5-large-instruct")
 index = faiss.read_index("../data/output_faiss/faiss.index")
-tokenizer = AutoTokenizer.from_pretrained("../../codet5-base")
-generator = AutoModelForSeq2SeqLM.from_pretrained("../../codet5-base")
+# tokenizer = AutoTokenizer.from_pretrained("../../codet5-base")
+tokenizer = AutoTokenizer.from_pretrained("Salesforce/codet5-base")
+generator = AutoModelForSeq2SeqLM.from_pretrained("Salesforce/codet5-base")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 generator.to(device)
 

@@ -12,7 +12,7 @@ export function activate(context: vscode.ExtensionContext) {
   console.log("Extension activation started...");
 
   // API 서비스 초기화
-  const apiService = new ApiService("http://localhost:3000");
+  const apiService = new ApiService("http://localhost:8000");
 
   // 웹뷰 패널 생성
   let chatPanel: vscode.WebviewPanel | undefined;

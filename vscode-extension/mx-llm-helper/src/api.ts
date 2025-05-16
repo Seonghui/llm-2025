@@ -8,7 +8,7 @@ export class ApiService {
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
     this.axiosInstance = axios.create({
-      timeout: 30000, // 30초 타임아웃
+      timeout: 300000, // 5분 타임아웃
       headers: {
         'Content-Type': 'application/json',
       }

@@ -9,7 +9,7 @@ import { SearchRequest } from "./types";
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-  console.log("Extension activation started...");
+  vscode.window.showInformationMessage("Extension activation started...");
 
   // API 서비스 초기화
   const apiService = new ApiService("http://localhost:8000");
@@ -75,16 +75,18 @@ export function activate(context: vscode.ExtensionContext) {
   let openChatCommand = vscode.commands.registerCommand(
     "mx-llm-helper.openChat",
     () => {
-      console.log("Opening chat panel...");
+      vscode.window.showInformationMessage("Opening chat panel...");
 
       if (chatPanel) {
-        console.log("Chat panel already exists, revealing...");
+        vscode.window.showInformationMessage(
+          "Chat panel already exists, revealing..."
+        );
         chatPanel.reveal();
         return;
       }
 
       // 웹뷰 패널 생성
-      console.log("Creating new chat panel...");
+      vscode.window.showInformationMessage("Creating new chat panel...");
       chatPanel = vscode.window.createWebviewPanel(
         "mx-llm-helper.chatView",
         "LLM Chat",
@@ -96,15 +98,20 @@ export function activate(context: vscode.ExtensionContext) {
       );
 
       // HTML 내용 설정
-      const htmlPath = path.join(context.extensionPath, "dist", "src", "chat.html");
-      console.log("Loading HTML from:", htmlPath);
+      const htmlPath = path.join(
+        context.extensionPath,
+        "dist",
+        "src",
+        "chat.html"
+      );
+      vscode.window.showInformationMessage("Loading HTML from:", htmlPath);
       const htmlContent = fs.readFileSync(htmlPath, "utf-8");
       chatPanel.webview.html = htmlContent;
 
       // 패널이 닫힐 때 처리
       chatPanel.onDidDispose(
         () => {
-          console.log("Chat panel disposed");
+          vscode.window.showInformationMessage("Chat panel disposed");
           chatPanel = undefined;
           isPanelActive = false;
         },
@@ -123,10 +130,16 @@ export function activate(context: vscode.ExtensionContext) {
       // 웹뷰로부터 메시지 수신
       chatPanel.webview.onDidReceiveMessage(
         async (message) => {
-          console.log("Received message from webview:", message);
+          vscode.window.showInformationMessage(
+            "Received message from webview:",
+            message
+          );
           switch (message.type) {
             case "sendMessage":
-              console.log("Processing message:", message.text);
+              vscode.window.showInformationMessage(
+                "Processing message:",
+                message.text
+              );
               try {
                 // 현재 에디터 정보와 선택된 텍스트 가져오기
                 const selectedText = getSelectedText();
@@ -139,6 +152,9 @@ export function activate(context: vscode.ExtensionContext) {
                   currentSearchMode === "file" ? currentFile : undefined
                 );
                 console.log("API response:", response);
+                vscode.window.showInformationMessage(
+                  "API response: " + response.result
+                );
 
                 // 웹뷰로 응답 전송
                 if (chatPanel) {
@@ -177,27 +193,33 @@ export function activate(context: vscode.ExtensionContext) {
       updateSearchMode();
 
       // 에디터 선택 변경 이벤트 구독
-      const editorChangeDisposable = vscode.window.onDidChangeActiveTextEditor(() => {
-        if (chatPanel && !isPanelActive) {
-          updateSearchMode();
+      const editorChangeDisposable = vscode.window.onDidChangeActiveTextEditor(
+        () => {
+          if (chatPanel && !isPanelActive) {
+            updateSearchMode();
+          }
         }
-      });
+      );
 
-      const selectionChangeDisposable = vscode.window.onDidChangeTextEditorSelection(() => {
-        if (chatPanel && !isPanelActive) {
-          updateSearchMode();
-        }
-      });
+      const selectionChangeDisposable =
+        vscode.window.onDidChangeTextEditorSelection(() => {
+          if (chatPanel && !isPanelActive) {
+            updateSearchMode();
+          }
+        });
 
-      context.subscriptions.push(editorChangeDisposable, selectionChangeDisposable);
+      context.subscriptions.push(
+        editorChangeDisposable,
+        selectionChangeDisposable
+      );
     }
   );
 
   context.subscriptions.push(openChatCommand);
-  console.log("Extension activation completed");
+  vscode.window.showInformationMessage("Extension activation completed");
 }
 
 // This method is called when your extension is deactivated
 export function deactivate() {
-  console.log("Extension is deactivating...");
+  vscode.window.showInformationMessage("Extension is deactivating...");
 }

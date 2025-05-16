@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LLM Chat</title>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -14,154 +13,51 @@
       padding: 20px;
       background-color: var(--vscode-editor-background);
       color: var(--vscode-editor-foreground);
-      height: 100vh;
+    }
+
+    #chat-container {
       display: flex;
       flex-direction: column;
-      box-sizing: border-box;
+      height: calc(100vh - 140px);
     }
 
-    .search-mode {
-      margin-bottom: 10px;
-      padding: 8px 12px;
-      border-radius: 16px;
-      background-color: var(--vscode-badge-background);
-      color: var(--vscode-badge-foreground);
-      font-size: 0.9em;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .search-mode:hover {
-      opacity: 0.9;
-    }
-
-    .search-mode.selected {
-      background-color: var(--vscode-gitDecoration-addedResourceForeground);
-    }
-
-    .search-mode.file {
-      background-color: var(--vscode-gitDecoration-modifiedResourceForeground);
-    }
-
-    .search-mode.general {
-      background-color: var(--vscode-gitDecoration-untrackedResourceForeground);
-    }
-
-    .search-mode-icon {
-      width: 16px;
-      height: 16px;
-      display: inline-block;
-    }
-
-    .search-mode-container {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-
-    .search-mode-remove {
-      cursor: pointer;
-      opacity: 0.7;
-      transition: opacity 0.2s ease;
-      display: none;
-    }
-
-    .search-mode-remove.visible {
-      display: inline-block;
-    }
-
-    .search-mode-remove:hover {
-      opacity: 1;
-    }
-
-    .chat-container {
-      flex: 1;
+    #messages {
+      flex-grow: 1;
       overflow-y: auto;
       margin-bottom: 20px;
       padding: 10px;
       border: 1px solid var(--vscode-panel-border);
       border-radius: 4px;
-      min-height: 0;
     }
 
     .message {
       margin-bottom: 15px;
-      padding: 15px;
-      border-radius: 8px;
-      max-width: 85%;
-      line-height: 1.5;
+      padding: 10px;
+      border-radius: 4px;
+      max-width: 80%;
     }
 
-    .message.user {
-      background-color: var(--vscode-badge-background);
+    .user-message {
+      background-color: var(--vscode-button-background);
+      color: var(--vscode-button-foreground);
+      align-self: flex-end;
       margin-left: auto;
     }
 
-    .message.bot {
+    .assistant-message {
       background-color: var(--vscode-editor-inactiveSelectionBackground);
+      align-self: flex-start;
       margin-right: auto;
+      white-space: pre-wrap;
     }
 
-    .message.bot h1 {
-      font-size: 1.5em;
-      margin-top: 0;
-      margin-bottom: 0.5em;
-      color: var(--vscode-editor-foreground);
-    }
-
-    .message.bot h2 {
-      font-size: 1.3em;
-      margin-top: 1em;
-      margin-bottom: 0.5em;
-      color: var(--vscode-editor-foreground);
-    }
-
-    .message.bot h3 {
-      font-size: 1.1em;
-      margin-top: 1em;
-      margin-bottom: 0.5em;
-      color: var(--vscode-editor-foreground);
-    }
-
-    .message.bot p {
-      margin: 0.5em 0;
-    }
-
-    .message.bot pre {
-      background-color: var(--vscode-editor-background);
-      padding: 1em;
-      border-radius: 6px;
-      overflow-x: auto;
-      margin: 1em 0;
-      border: 1px solid var(--vscode-panel-border);
-    }
-
-    .message.bot code {
-      font-family: "Courier New", Courier, monospace;
-      background-color: var(--vscode-editor-background);
-      padding: 0.2em 0.4em;
-      border-radius: 3px;
-    }
-
-    .message.bot blockquote {
-      border-left: 4px solid var(--vscode-badge-background);
-      margin: 1em 0;
-      padding: 0.5em 1em;
-      background-color: var(--vscode-editor-background);
-    }
-
-    .input-container {
+    #input-container {
       display: flex;
       gap: 10px;
     }
 
-    #messageInput {
-      flex: 1;
+    #message-input {
+      flex-grow: 1;
       padding: 8px;
       border: 1px solid var(--vscode-input-border);
       border-radius: 4px;
@@ -169,7 +65,7 @@
       color: var(--vscode-input-foreground);
     }
 
-    #sendButton {
+    #send-button {
       padding: 8px 16px;
       background-color: var(--vscode-button-background);
       color: var(--vscode-button-foreground);
@@ -178,142 +74,79 @@
       cursor: pointer;
     }
 
-    #sendButton:hover {
+    #send-button:hover {
       background-color: var(--vscode-button-hoverBackground);
     }
 
-    pre {
-      background-color: var(--vscode-editor-background);
-      padding: 10px;
+    #search-mode {
+      margin-bottom: 10px;
+      padding: 8px;
+      background-color: var(--vscode-editor-inactiveSelectionBackground);
       border-radius: 4px;
-      overflow-x: auto;
-    }
-
-    code {
-      font-family: "Courier New", Courier, monospace;
+      font-size: 0.9em;
     }
   </style>
 </head>
 
 <body>
-  <div class="search-mode-container">
-    <div class="search-mode" id="searchMode">
-      <span class="search-mode-icon">🔍</span>
-      <span id="searchModeText">일반 검색</span>
+  <div id="search-mode">검색 모드: 일반</div>
+  <div id="chat-container">
+    <div id="messages"></div>
+    <div id="input-container">
+      <input type="text" id="message-input" placeholder="메시지를 입력하세요..." />
+      <button id="send-button">전송</button>
     </div>
-    <span class="search-mode-remove" id="searchModeRemove" title="검색 모드 제거">✕</span>
   </div>
-  <div class="chat-container" id="chatContainer"></div>
-  <div class="input-container">
-    <input type="text" id="messageInput" placeholder="메시지를 입력하세요..." />
-    <button id="sendButton">전송</button>
-  </div>
+
   <script>
-    const vscode = acquireVsCodeApi();
-    const chatContainer = document.getElementById("chatContainer");
-    const messageInput = document.getElementById("messageInput");
-    const sendButton = document.getElementById("sendButton");
-    const searchMode = document.getElementById("searchMode");
-    const searchModeText = document.getElementById("searchModeText");
-    const searchModeRemove = document.getElementById("searchModeRemove");
+    (function () {
+      const vscode = acquireVsCodeApi();
+      const messagesContainer = document.getElementById('messages');
+      const messageInput = document.getElementById('message-input');
+      const sendButton = document.getElementById('send-button');
+      const searchMode = document.getElementById('search-mode');
 
-    // 현재 검색 모드 상태 저장
-    let currentSearchMode = "general";
+      function addMessage(text, isUser) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isUser ? 'user-message' : 'assistant-message'}`;
+        messageDiv.textContent = text;
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
 
-    // Mock data for testing
-    const mockResponses = {
-      hello: "Hello! How can I help you with your code today?",
-      help: "I can help you understand code, suggest improvements, or answer questions about programming.",
-      default: "I understand your question. Let me help you with that.",
-    };
-
-    // 검색 모드 업데이트 함수
-    function updateSearchMode(mode) {
-      if (mode) {
-        currentSearchMode = mode;
-        searchMode.className = "search-mode " + mode;
-        searchModeRemove.className = "search-mode-remove" + (mode === "general" ? "" : " visible");
-
-        switch (mode) {
-          case "selected":
-            searchModeText.textContent = "선택된 코드 검색";
-            break;
-          case "file":
-            searchModeText.textContent = "현재 파일 검색";
-            break;
-          case "general":
-            searchModeText.textContent = "일반 검색";
-            break;
+      function sendMessage() {
+        const text = messageInput.value.trim();
+        if (text) {
+          addMessage(text, true);
+          vscode.postMessage({
+            type: 'sendMessage',
+            text: text
+          });
+          messageInput.value = '';
         }
       }
-    }
 
-    // 검색 모드 제거 함수
-    function removeSearchMode() {
-      updateSearchMode("general");
-      vscode.postMessage({
-        type: "updateSearchMode",
-        mode: "general"
+      sendButton.addEventListener('click', sendMessage);
+      messageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          sendMessage();
+        }
       });
-    }
 
-    // 메시지 전송 함수
-    function sendMessage() {
-      const text = messageInput.value.trim();
-      if (text) {
-        // 사용자 메시지 추가
-        addMessage(text, true);
-
-        // 메시지 전송
-        vscode.postMessage({
-          type: "sendMessage",
-          text: text
-        });
-
-        // 입력창 초기화
-        messageInput.value = "";
-      }
-    }
-
-    // 메시지 추가 함수
-    function addMessage(text, isUser) {
-      const messageDiv = document.createElement("div");
-      messageDiv.className = `message ${isUser ? "user" : "bot"}`;
-
-      if (isUser) {
-        messageDiv.textContent = text;
-      } else {
-        // 마크다운 렌더링
-        messageDiv.innerHTML = marked.parse(text);
-      }
-
-      chatContainer.appendChild(messageDiv);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-
-    // 이벤트 리스너 등록
-    sendButton.addEventListener("click", sendMessage);
-    messageInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") {
-        sendMessage();
-      }
-    });
-
-    // 검색 모드 제거 버튼 이벤트
-    searchModeRemove.addEventListener("click", removeSearchMode);
-
-    // VS Code로부터 메시지 수신
-    window.addEventListener("message", (event) => {
-      const message = event.data;
-      switch (message.type) {
-        case "addMessage":
-          addMessage(message.text, message.isUser);
-          break;
-        case "updateSearchMode":
-          updateSearchMode(message.mode);
-          break;
-      }
-    });
+      window.addEventListener('message', event => {
+        const message = event.data;
+        switch (message.type) {
+          case 'addMessage':
+            addMessage(message.text, message.isUser);
+            break;
+          case 'updateSearchMode':
+            searchMode.textContent = `검색 모드: ${message.mode === 'selected' ? '선택된 텍스트' :
+                message.mode === 'file' ? '현재 파일' : '일반'
+              }`;
+            break;
+        }
+      });
+    })();
   </script>
 </body>
 

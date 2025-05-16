@@ -152,9 +152,7 @@ export function activate(context: vscode.ExtensionContext) {
                   currentSearchMode === "file" ? currentFile : undefined
                 );
                 console.log("API response:", response);
-                vscode.window.showInformationMessage(
-                  "API response: " + response.result
-                );
+                vscode.window.showInformationMessage("API response: " + response.result);
 
                 // 웹뷰로 응답 전송
                 if (chatPanel) {

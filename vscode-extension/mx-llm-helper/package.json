@@ -2,7 +2,7 @@
   "name": "mx-llm-helper",
   "displayName": "mx-llm-helper",
   "description": "Chat-based LLM assistant for code understanding",
-  "version": "0.0.2",
+  "version": "0.0.8",
   "repository": {
     "type": "git",
     "url": "https://github.com/llm-2025/vscode-extension/mx-llm-helper"
@@ -49,6 +49,10 @@
         }
       ]
     }
+  },
+  "log": {
+    "level": "debug",
+    "output": "console"
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

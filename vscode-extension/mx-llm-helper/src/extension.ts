@@ -96,7 +96,7 @@ export function activate(context: vscode.ExtensionContext) {
       );
 
       // HTML 내용 설정
-      const htmlPath = path.join(context.extensionPath, "src", "chat.html");
+      const htmlPath = path.join(context.extensionPath, "dist", "src", "chat.html");
       console.log("Loading HTML from:", htmlPath);
       const htmlContent = fs.readFileSync(htmlPath, "utf-8");
       chatPanel.webview.html = htmlContent;

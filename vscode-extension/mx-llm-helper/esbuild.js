@@ -1,4 +1,6 @@
 const esbuild = require("esbuild");
+const fs = require('fs');
+const path = require('path');
 
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
@@ -23,6 +25,35 @@ const esbuildProblemMatcherPlugin = {
 	},
 };
 
+/**
+ * @type {import('esbuild').Plugin}
+ */
+const copyHtmlPlugin = {
+	name: 'copy-html',
+	setup(build) {
+		build.onEnd(() => {
+			// src 디렉토리의 HTML 파일을 dist로 복사
+			const srcDir = path.join(__dirname, 'src');
+			const distDir = path.join(__dirname, 'dist');
+
+			// dist/src 디렉토리가 없으면 생성
+			const distSrcDir = path.join(distDir, 'src');
+			if (!fs.existsSync(distSrcDir)) {
+				fs.mkdirSync(distSrcDir, { recursive: true });
+			}
+
+			// HTML 파일 복사
+			const htmlFiles = fs.readdirSync(srcDir).filter(file => file.endsWith('.html'));
+			htmlFiles.forEach(file => {
+				fs.copyFileSync(
+					path.join(srcDir, file),
+					path.join(distSrcDir, file)
+				);
+			});
+		});
+	},
+};
+
 async function main() {
 	const ctx = await esbuild.context({
 		entryPoints: [
@@ -38,8 +69,8 @@ async function main() {
 		external: ['vscode'],
 		logLevel: 'silent',
 		plugins: [
-			/* add to the end of plugins array */
 			esbuildProblemMatcherPlugin,
+			copyHtmlPlugin,
 		],
 	});
 	if (watch) {

@@ -17,7 +17,8 @@ logging.basicConfig(level=logging.WARNING)
 # 기본 설정
 EMBEDDING_MODEL = "../../multilingual-e5-large-instruct"
 PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
-LLM_MODEL_PATH = os.path.join(PROJECT_ROOT, "models/llama-2-ko-7b.gguf")
+LLM_MODEL_PATH = os.path.join(PROJECT_ROOT, "models/models/gemma-3-1b-it-Q4_K_M.gguf")
+
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {DEVICE}")
@@ -34,7 +35,7 @@ class CodeAssistant:
             model_path=LLM_MODEL_PATH,
             n_ctx=2048,
             n_threads=6,
-            n_gpu_layers=0,
+            n_gpu_layers=30 if DEVICE == "cuda" else 0,
             verbose=False,
             use_mlock=True,
             use_mmap=True,
@@ -47,7 +48,7 @@ class CodeAssistant:
         self.index = faiss.read_index(faiss_path)
         
         print("청크 데이터 로딩 중...")
-        chunks_path = os.path.join(DATA_DIR, "chunks.pkl")
+        chunks_path = os.path.join(DATA_DIR, "metadata.pkl")
         print(f"청크 데이터 경로: {chunks_path}")
         with open(chunks_path, "rb") as f:
             self.chunks = pickle.load(f)

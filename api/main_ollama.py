@@ -40,15 +40,71 @@ class CodeAssistant:
             
         print("초기화 완료!")
 
-    def create_prompt(self, question: str, relevant_chunks: List[dict]) -> str:
-        # 시스템 프롬프트
-        system_prompt = """당신은 Vue.js와 TypeScript에 대한 전문가입니다.
-주어진 코드 예제들을 참고하여 사용자의 질문에 정확하고 자세하게 답변해주세요.
+    def classify_question_type(self, question: str) -> str:
+        # 질문 유형 분류를 위한 키워드
+        summary_keywords = ["요약", "간단히", "짧게", "핵심만"]
+        optimization_keywords = ["최적화", "개선", "리팩토링", "더 나은", "더 좋은"]
+        generation_keywords = ["만들어", "생성", "새로", "추가"]
+
+        question_lower = question.lower()
+        
+        for keyword in summary_keywords:
+            if keyword in question:
+                return "summary"
+                
+        for keyword in optimization_keywords:
+            if keyword in question:
+                return "optimization"
+                
+        for keyword in generation_keywords:
+            if keyword in question:
+                return "generation"
+                
+        return "general"  # 기본 유형
+
+    def get_system_prompt(self, question_type: str) -> str:
+        base_prompt = """당신은 Vue.js와 TypeScript에 대한 전문가입니다.
 답변할 때는 다음 규칙을 따라주세요:
 1. 코드 예제를 인용할 때는 구체적으로 어떤 파일의 어떤 부분인지 설명해주세요.
 2. TypeScript와 Vue의 모범 사례를 따르는 설명을 제공해주세요.
 3. 가능한 한 실제 코드 예제를 포함해서 설명해주세요.
 4. 설명은 친절하고 이해하기 쉽게 작성해주세요."""
+
+        if question_type == "summary":
+            return base_prompt + """
+주어진 코드를 다음과 같이 요약해주세요:
+1. 코드의 핵심 기능과 목적
+2. 주요 컴포넌트와 메서드의 역할
+3. 중요한 로직이나 패턴
+4. 전체 구조를 간단히 설명"""
+
+        elif question_type == "optimization":
+            return base_prompt + """
+주어진 코드를 다음 관점에서 개선해주세요:
+1. 성능 최적화 가능성
+2. 코드 가독성과 유지보수성
+3. TypeScript/Vue.js 모범 사례 적용
+4. 잠재적인 버그나 문제점
+5. 구체적인 개선 방안과 예시 코드"""
+
+        elif question_type == "generation":
+            return base_prompt + """
+요청한 컴포넌트/기능을 다음 사항을 고려하여 생성해주세요:
+1. TypeScript와 Vue.js의 최신 문법과 기능 활용
+2. 재사용성과 확장성을 고려한 설계
+3. 적절한 타입 정의와 인터페이스 사용
+4. 에러 처리와 예외 상황 고려
+5. 구체적인 구현 코드와 사용 예시"""
+
+        else:
+            return base_prompt
+
+    def create_prompt(self, question: str, relevant_chunks: List[dict]) -> str:
+        # 질문 유형 분류
+        question_type = self.classify_question_type(question)
+        
+        # 질문 유형에 따른 시스템 프롬프트 선택
+        system_prompt = self.get_system_prompt(question_type)
 
         # 관련 코드 컨텍스트 구성
         context = []

@@ -1,68 +1,43 @@
 import json
-import pickle
+import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
-import faiss
-import os
 
-# 1. 청크 로딩
-def load_chunks(json_path: str):
-    with open(json_path, 'r', encoding='utf-8') as f:
-        chunks_data = json.load(f)
-    return chunks_data
+# ✅ 임베딩 모델 로드 (multilingual-e5-large-instruct)
+model = SentenceTransformer("../../multilingual-e5-large-instruct")
+print("✅ 임베딩 모델 로드 완료")
 
-# 2. 임베딩 생성
-def embed_chunks(model, metadata: list[dict]) -> np.ndarray:
-    prompts = [
-        f"passage: 이 코드는 vue의 {entry['name']} 컴포넌트 또는 함수이며, 다음과 같은 내용을 포함할 수 있습니다:\n{entry['code']}"
-        for entry in metadata
-    ]   
+# ✅ vue_chunks.json 로드
+with open("../data/vue_chunks.json", "r", encoding="utf-8") as f:
+    chunks = json.load(f)
 
-    embeddings = model.encode(prompts, normalize_embeddings=True)
-    return np.array(embeddings).astype('float32')
+# ✅ embeddingText 추출 및 전처리
+texts = ["passage: " + chunk["embeddingText"] for chunk in chunks]
 
-# 3. FAISS + 메타데이터 저장
-def save_faiss_index(vectors: np.ndarray, metadata: list[dict], output_dir: str):
-    os.makedirs(output_dir, exist_ok=True)
+# ✅ 텍스트 임베딩
+embeddings = model.encode(texts, show_progress_bar=True, normalize_embeddings=True)
 
-    dim = vectors.shape[1]
-    index = faiss.IndexFlatL2(dim)
-    index.add(vectors)
-    faiss.write_index(index, os.path.join(output_dir, 'faiss.index'))
+# ✅ FAISS 인덱스 생성
+dimension = embeddings.shape[1]
+index = faiss.IndexFlatIP(dimension)
+index.add(np.array(embeddings, dtype="float32"))
 
-    with open(os.path.join(output_dir, 'metadata.pkl'), 'wb') as f:
-        pickle.dump(metadata, f)
+# ✅ 인덱스 저장
+faiss.write_index(index, "../data/faiss.index")
 
-# 4. 전체 실행
-def run_pipeline(json_path: str, output_dir: str):
-    print("📦 청크 로딩 중...")
-    chunks_data = load_chunks(json_path)
+# ✅ 메타데이터 저장
+import pickle
+metadata = [
+    {
+        "id": i,
+        "file": chunk["filePath"],
+        "name": chunk["className"],
+        "code": chunk["embeddingText"]
+    }
+    for i, chunk in enumerate(chunks)
+]
 
-    # chunks = [entry["code"] for entry in chunks_data]
-    metadata = [
-        {
-            "file": entry["filePath"],
-            "name": entry.get("name", "unknown"),
-            "code": entry["code"]
-        }
-        for entry in chunks_data
-    ]
+with open("../data/metadata.pkl", "wb") as f:
+    pickle.dump(metadata, f)
 
-    print(f"🧠 청크 수: {len(metadata)}")
-
-    print("📥 모델 로딩 중...")
-    # model = SentenceTransformer("intfloat/multilingual-e5-large-instruct")
-    model = SentenceTransformer("../../multilingual-e5-large-instruct")
-
-
-    print("🔢 임베딩 중...")
-    vectors = embed_chunks(model, metadata)
-
-
-    print("💾 FAISS 저장 중...")
-    save_faiss_index(vectors, metadata, output_dir)
-
-    print("✅ 저장 완료 →", output_dir)
-
-
-run_pipeline("../data/vue_chunks_annotated.json", "../data/output_faiss")
+print("✅ FAISS 인덱스 및 메타데이터 저장 완료")

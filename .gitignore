@@ -25,3 +25,4 @@ repo/vue-ts-realworld-app
 # ▶️ Node.js 모듈 폴더
 node_modules/
 dist/
+llama.cpp

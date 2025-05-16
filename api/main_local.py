@@ -17,7 +17,7 @@ from typing import List, Optional
 PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 
-model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+model = SentenceTransformer("../../multilingual-e5-large-instruct")
 index = faiss.read_index("../data/faiss.index")
 tokenizer = AutoTokenizer.from_pretrained("../../gemma-ko-2b")
 generator = AutoModelForCausalLM.from_pretrained("../../gemma-ko-2b")

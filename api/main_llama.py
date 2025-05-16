@@ -15,9 +15,9 @@ import logging
 logging.basicConfig(level=logging.WARNING)
 
 # 기본 설정
-EMBEDDING_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
+EMBEDDING_MODEL = "../../multilingual-e5-large-instruct"
 PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
-LLM_MODEL_PATH = os.path.join(PROJECT_ROOT, "models/llama-2-ko-4bit.gguf")
+LLM_MODEL_PATH = os.path.join(PROJECT_ROOT, "models/llama-2-ko-7b.gguf")
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {DEVICE}")

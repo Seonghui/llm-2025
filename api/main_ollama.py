@@ -10,7 +10,7 @@ from typing import List, Optional
 import os
 from langchain_ollama.llms import OllamaLLM
 
-EMBEDDING_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
+EMBEDDING_MODEL = "../../multilingual-e5-large-instruct"
 PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -33,7 +33,7 @@ class CodeAssistant:
         self.index = faiss.read_index(faiss_path)
         
         print("청크 데이터 로딩 중...")
-        chunks_path = os.path.join(DATA_DIR, "chunks.pkl")
+        chunks_path = os.path.join(DATA_DIR, "metadata.pkl")
         print(f"청크 데이터 경로: {chunks_path}")
         with open(chunks_path, "rb") as f:
             self.chunks = pickle.load(f)
@@ -54,12 +54,10 @@ class CodeAssistant:
         context = []
         for i, chunk in enumerate(relevant_chunks, 1):
             chunk_text = f"예제 {i}:\n"
-            chunk_text += f"파일: {chunk['file_path']}\n"
-            if chunk.get('semantic_type'):
-                chunk_text += f"타입: {chunk['semantic_type']}\n"
-            if chunk.get('context'):
-                chunk_text += f"설명: {chunk['context']}\n"
-            chunk_text += f"코드:\n{chunk['content']}\n"
+            chunk_text += f"파일: {chunk['file']}\n"
+            if chunk.get('name'):
+                chunk_text += f"타입: {chunk['name']}\n"
+            chunk_text += f"코드:\n{chunk['code']}\n"
             context.append(chunk_text)
 
         # 최종 프롬프트 구성

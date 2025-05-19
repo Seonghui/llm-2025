@@ -2345,24 +2345,34 @@
     };
 
     // 검색 모드 업데이트 함수
-    function updateSearchMode(mode) {
+    function updateSearchMode(mode, fileName, lineInfo) {
       if (mode) {
         currentSearchMode = mode;
         searchMode.className = "search-mode " + mode;
         searchModeRemove.className =
           "search-mode-remove" + (mode === "general" ? "" : " visible");
 
+        let modeText = "";
         switch (mode) {
           case "selected":
-            searchModeText.textContent = "선택된 코드 검색";
+            modeText = "선택된 코드 검색";
             break;
           case "file":
-            searchModeText.textContent = "현재 파일 검색";
+            modeText = "현재 파일 검색";
             break;
           case "general":
-            searchModeText.textContent = "일반 검색";
+            modeText = "일반 검색";
             break;
         }
+
+        if (fileName) {
+          modeText += ` - ${fileName}`;
+          if (lineInfo) {
+            modeText += ` ${lineInfo}`;
+          }
+        }
+
+        searchModeText.textContent = modeText;
       }
     }
 
@@ -2428,7 +2438,7 @@
           addMessage(message.text, message.isUser);
           break;
         case "updateSearchMode":
-          updateSearchMode(message.mode);
+          updateSearchMode(message.mode, message.fileName, message.lineInfo);
           break;
       }
     });

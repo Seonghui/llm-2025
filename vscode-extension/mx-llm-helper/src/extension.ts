@@ -57,10 +57,23 @@ export function activate(context: vscode.ExtensionContext) {
     const selectedText = getSelectedText();
     const currentFile = getCurrentEditorInfo();
 
+    let fileName: string | undefined = undefined;
+    let lineInfo: string | undefined = undefined;
+
     if (selectedText) {
       currentSearchMode = "selected";
+      if (currentFile) {
+        fileName = path.basename(currentFile.path);
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+          const start = editor.selection.start.line + 1;
+          const end = editor.selection.end.line + 1;
+          lineInfo = start === end ? `${start}줄` : `${start}-${end}줄`;
+        }
+      }
     } else if (currentFile) {
       currentSearchMode = "file";
+      fileName = path.basename(currentFile.path);
     } else {
       currentSearchMode = "general";
     }
@@ -68,6 +81,8 @@ export function activate(context: vscode.ExtensionContext) {
     chatPanel.webview.postMessage({
       type: "updateSearchMode",
       mode: currentSearchMode,
+      fileName,
+      lineInfo,
     });
   }
 
@@ -151,8 +166,8 @@ export function activate(context: vscode.ExtensionContext) {
                   currentSearchMode === "general"
                     ? "0"
                     : currentSearchMode === "file"
-                    ? "1"
-                    : "2"
+                      ? "1"
+                      : "2"
                 );
                 console.log("API response:", response);
                 vscode.window.showInformationMessage(

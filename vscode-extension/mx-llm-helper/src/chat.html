@@ -2144,7 +2144,7 @@
       background-color: var(--vscode-badge-background);
       color: var(--vscode-badge-foreground);
       font-size: 0.9em;
-      display: inline-flex;
+      display: flex;
       align-items: center;
       gap: 8px;
       transition: all 0.2s ease;
@@ -2179,6 +2179,7 @@
       align-items: center;
       gap: 8px;
       margin-bottom: 10px;
+      justify-content: space-between;
     }
 
     .search-mode-remove {
@@ -2309,6 +2310,20 @@
     code {
       font-family: "Courier New", Courier, monospace;
     }
+
+    .search-mode-text {
+      font-size: 12px;
+      color: var(--vscode-badge-foreground);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .search-mode-meta {
+      font-size: 12px;
+      color: var(--vscode-descriptionForeground);
+      margin-left: 16px;
+    }
   </style>
 </head>
 
@@ -2316,8 +2331,9 @@
   <div class="search-mode-container">
     <div class="search-mode" id="searchMode">
       <span class="search-mode-icon">🔍</span>
-      <span id="searchModeText">일반 검색</span>
+      <span id="searchModeText" class="search-mode-text">일반 검색</span>
     </div>
+    <span id="searchModeMeta" class="search-mode-meta"></span>
     <span class="search-mode-remove" id="searchModeRemove" title="검색 모드 제거">✕</span>
   </div>
   <div class="chat-container" id="chatContainer"></div>
@@ -2365,14 +2381,19 @@
             break;
         }
 
-        if (fileName) {
-          modeText += ` - ${fileName}`;
-          if (lineInfo) {
-            modeText += ` ${lineInfo}`;
-          }
-        }
-
         searchModeText.textContent = modeText;
+
+        // 파일명과 라인 정보 업데이트
+        const searchModeMeta = document.getElementById("searchModeMeta");
+        if (fileName) {
+          let metaText = fileName;
+          if (lineInfo) {
+            metaText += ` ${lineInfo}`;
+          }
+          searchModeMeta.textContent = metaText;
+        } else {
+          searchModeMeta.textContent = "";
+        }
       }
     }
 

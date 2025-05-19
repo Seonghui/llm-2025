@@ -18,11 +18,13 @@ export class ApiService {
   async search(
     question: string,
     selectedText?: string,
-    currentFile?: SearchRequest["currentFile"]
+    currentFile?: SearchRequest["currentFile"],
+    mode: '0' | '1' | '2' = '0'
   ): Promise<SearchResponse> {
     try {
       const response = await this.axiosInstance.post(`${this.baseUrl}/search`, {
         question,
+        mode,
         selectedText,
         currentFile
       } as SearchRequest);

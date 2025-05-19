@@ -50,7 +50,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // 검색 모드 업데이트 함수
   function updateSearchMode() {
-    if (!chatPanel || isPanelActive) {
+    if (!chatPanel) {
       return;
     }
 
@@ -122,9 +122,7 @@ export function activate(context: vscode.ExtensionContext) {
       // 패널 활성화 상태 변경 이벤트
       chatPanel.onDidChangeViewState((e) => {
         isPanelActive = e.webviewPanel.active;
-        if (!isPanelActive) {
-          updateSearchMode();
-        }
+        updateSearchMode(); // 활성화 상태와 관계없이 모드 업데이트
       });
 
       // 웹뷰로부터 메시지 수신
@@ -149,10 +147,17 @@ export function activate(context: vscode.ExtensionContext) {
                 const response = await apiService.search(
                   message.text,
                   currentSearchMode === "selected" ? selectedText : undefined,
-                  currentSearchMode === "file" ? currentFile : undefined
+                  currentSearchMode === "file" ? currentFile : undefined,
+                  currentSearchMode === "general"
+                    ? "0"
+                    : currentSearchMode === "file"
+                    ? "1"
+                    : "2"
                 );
                 console.log("API response:", response);
-                vscode.window.showInformationMessage("API response: " + response.result);
+                vscode.window.showInformationMessage(
+                  "API response: " + response.result
+                );
 
                 // 웹뷰로 응답 전송
                 if (chatPanel) {
@@ -180,6 +185,9 @@ export function activate(context: vscode.ExtensionContext) {
                   });
                 }
               }
+              break;
+            case "inputFocus": // 입력창 포커스 이벤트 처리
+              updateSearchMode();
               break;
           }
         },

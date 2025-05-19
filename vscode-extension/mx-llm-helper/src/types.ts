@@ -6,7 +6,8 @@ export interface SearchResponse {
 
 export interface SearchRequest {
   question: string;
-  selectedText?: string; // 선택된 텍스트
+  mode: '0' | '1' | '2';  // '0': general, '1': file, '2': selected
+  selectedText?: string;
   currentFile?: {
     // 현재 파일 정보
     content: string;

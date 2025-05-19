@@ -2165,12 +2165,14 @@
     }
 
     .search-mode.general {
-      background-color: var(--vscode-gitDecoration-untrackedResourceForeground);
+      background-color: var(--vscode-badge-background);
     }
 
-    .search-mode-icon {
-      width: 16px;
-      height: 16px;
+    .search-mode-remove:hover {
+      opacity: 1;
+    }
+
+    .search-mode-remove.visible {
       display: inline-block;
     }
 
@@ -2182,19 +2184,31 @@
       justify-content: space-between;
     }
 
+    .search-mode-text {
+      font-size: 12px;
+      color: var(--vscode-badge-foreground);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .search-mode-meta {
+      font-size: 12px;
+      color: var(--vscode-descriptionForeground);
+      margin-left: 16px;
+      display: flex;
+      align-items: center;
+    }
+
     .search-mode-remove {
       cursor: pointer;
       opacity: 0.7;
       transition: opacity 0.2s ease;
       display: none;
-    }
-
-    .search-mode-remove.visible {
-      display: inline-block;
-    }
-
-    .search-mode-remove:hover {
-      opacity: 1;
+      margin-left: 8px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
     }
 
     .chat-container {
@@ -2310,20 +2324,6 @@
     code {
       font-family: "Courier New", Courier, monospace;
     }
-
-    .search-mode-text {
-      font-size: 12px;
-      color: var(--vscode-badge-foreground);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .search-mode-meta {
-      font-size: 12px;
-      color: var(--vscode-descriptionForeground);
-      margin-left: 16px;
-    }
   </style>
 </head>
 
@@ -2332,9 +2332,9 @@
     <div class="search-mode" id="searchMode">
       <span class="search-mode-icon">🔍</span>
       <span id="searchModeText" class="search-mode-text">일반 검색</span>
+      <span class="search-mode-remove" id="searchModeRemove" title="검색 모드 제거">✕</span>
     </div>
     <span id="searchModeMeta" class="search-mode-meta"></span>
-    <span class="search-mode-remove" id="searchModeRemove" title="검색 모드 제거">✕</span>
   </div>
   <div class="chat-container" id="chatContainer"></div>
   <div class="input-container">
@@ -2467,7 +2467,7 @@
     // 입력창 포커스 이벤트 추가
     messageInput.addEventListener("focus", () => {
       vscode.postMessage({
-        type: "inputFocus"
+        type: "inputFocus",
       });
     });
   </script>

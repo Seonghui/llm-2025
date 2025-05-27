@@ -22,12 +22,16 @@ export class ApiService {
     mode: '0' | '1' | '2' = '0'
   ): Promise<SearchResponse> {
     try {
-      const response = await this.axiosInstance.post(`${this.baseUrl}/search`, {
+      const requestData = {
         question,
         mode,
         selectedText,
         currentFile
-      } as SearchRequest);
+      } as SearchRequest;
+
+      console.log("Search request data:", JSON.stringify(requestData, null, 2));
+
+      const response = await this.axiosInstance.post(`${this.baseUrl}/search`, requestData);
 
       return response.data as SearchResponse;
     } catch (error) {

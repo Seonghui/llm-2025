@@ -78,11 +78,21 @@ export function activate(context: vscode.ExtensionContext) {
       currentSearchMode = "general";
     }
 
+    console.log("Updating search mode with data:", {
+      mode: currentSearchMode,
+      fileName,
+      lineInfo,
+      selectedText,
+      currentFile
+    });
+
     chatPanel.webview.postMessage({
       type: "updateSearchMode",
       mode: currentSearchMode,
       fileName,
       lineInfo,
+      selectedText,
+      currentFile
     });
   }
 
@@ -143,33 +153,55 @@ export function activate(context: vscode.ExtensionContext) {
       // 웹뷰로부터 메시지 수신
       chatPanel.webview.onDidReceiveMessage(
         async (message) => {
-          vscode.window.showInformationMessage(
-            "Received message from webview:",
-            message
-          );
+          console.log("Received message from webview:", message);
           switch (message.type) {
             case "sendMessage":
-              vscode.window.showInformationMessage(
-                "Processing message:",
-                message.text
-              );
+              console.log("Processing message with data:", {
+                text: message.text,
+                selectedText: message.selectedText,
+                currentFile: message.currentFile,
+                currentSearchMode
+              });
               try {
-                // 현재 에디터 정보와 선택된 텍스트 가져오기
-                const selectedText = getSelectedText();
-                const currentFile = getCurrentEditorInfo();
+                // WebView에서 전달받은 selectedText와 currentFile 정보 사용
+                const selectedText = message.selectedText || getSelectedText();
+                const currentFile = message.currentFile || getCurrentEditorInfo();
+
+                console.log("Using data for API call:", {
+                  selectedText,
+                  currentFile,
+                  currentSearchMode
+                });
 
                 // API 호출
                 const response = await apiService.search(
                   message.text,
                   currentSearchMode === "selected" ? selectedText : undefined,
-                  currentSearchMode === "file" ? currentFile : undefined,
+                  (currentSearchMode === "file" || currentSearchMode === "selected") ?
+                    currentFile ? {
+                      ...currentFile,
+                      path: path.basename(currentFile.path)
+                    } : undefined
+                    : undefined,
                   currentSearchMode === "general"
                     ? "0"
                     : currentSearchMode === "file"
                       ? "1"
                       : "2"
                 );
-                console.log("API response:", response);
+
+                console.log("Search request data:", {
+                  question: message.text,
+                  mode: currentSearchMode === "general" ? "0" : currentSearchMode === "file" ? "1" : "2",
+                  selectedText: currentSearchMode === "selected" ? selectedText : undefined,
+                  currentFile: (currentSearchMode === "file" || currentSearchMode === "selected") ?
+                    currentFile ? {
+                      ...currentFile,
+                      path: path.basename(currentFile.path)
+                    } : undefined
+                    : undefined
+                });
+
                 vscode.window.showInformationMessage(
                   "API response: " + response.result
                 );
@@ -202,7 +234,31 @@ export function activate(context: vscode.ExtensionContext) {
               }
               break;
             case "inputFocus": // 입력창 포커스 이벤트 처리
-              updateSearchMode();
+              // 현재 에디터 정보 가져오기
+              const editor = vscode.window.activeTextEditor;
+              if (editor) {
+                const selectedText = getSelectedText();
+                const currentFile = getCurrentEditorInfo();
+
+                // 검색 모드 업데이트
+                if (selectedText) {
+                  currentSearchMode = "selected";
+                } else if (currentFile) {
+                  currentSearchMode = "file";
+                } else {
+                  currentSearchMode = "general";
+                }
+
+                // WebView로 정보 전송
+                chatPanel?.webview.postMessage({
+                  type: "updateSearchMode",
+                  mode: currentSearchMode,
+                  fileName: currentFile ? path.basename(currentFile.path) : undefined,
+                  lineInfo: selectedText ? `${editor.selection.start.line + 1}줄` : undefined,
+                  selectedText,
+                  currentFile
+                });
+              }
               break;
           }
         },

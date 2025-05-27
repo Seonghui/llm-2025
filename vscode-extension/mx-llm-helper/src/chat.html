@@ -2417,6 +2417,8 @@
         vscode.postMessage({
           type: "sendMessage",
           text: text,
+          selectedText: window.selectedText,
+          currentFile: window.currentFile
         });
 
         // 입력창 초기화
@@ -2460,6 +2462,9 @@
           break;
         case "updateSearchMode":
           updateSearchMode(message.mode, message.fileName, message.lineInfo);
+          // 선택된 텍스트와 파일 정보 업데이트
+          window.selectedText = message.selectedText;
+          window.currentFile = message.currentFile;
           break;
       }
     });

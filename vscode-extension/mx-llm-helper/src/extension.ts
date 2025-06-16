@@ -10,7 +10,6 @@ import { SearchRequest } from "./types";
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
   vscode.window.showInformationMessage("Extension activation started...");
-
   // API 서비스 초기화
   const apiService = new ApiService("http://localhost:8000");
 
@@ -190,18 +189,6 @@ export function activate(context: vscode.ExtensionContext) {
                       : "2"
                 );
 
-                console.log("Search request data:", {
-                  question: message.text,
-                  mode: currentSearchMode === "general" ? "0" : currentSearchMode === "file" ? "1" : "2",
-                  selectedText: currentSearchMode === "selected" ? selectedText : undefined,
-                  currentFile: (currentSearchMode === "file" || currentSearchMode === "selected") ?
-                    currentFile ? {
-                      ...currentFile,
-                      path: path.basename(currentFile.path)
-                    } : undefined
-                    : undefined
-                });
-
                 vscode.window.showInformationMessage(
                   "API response: " + response.result
                 );
@@ -231,6 +218,21 @@ export function activate(context: vscode.ExtensionContext) {
                     isUser: false,
                   });
                 }
+              }
+              break;
+            case "updateSearchMode":
+              // 검색 모드 업데이트
+              currentSearchMode = message.mode;
+              if (message.mode === "general") {
+                // 일반 검색 모드로 변경 시 모든 상태 초기화
+                chatPanel?.webview.postMessage({
+                  type: "updateSearchMode",
+                  mode: "general",
+                  fileName: undefined,
+                  lineInfo: undefined,
+                  selectedText: undefined,
+                  currentFile: undefined
+                });
               }
               break;
             case "inputFocus": // 입력창 포커스 이벤트 처리
